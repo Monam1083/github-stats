@@ -28,6 +28,27 @@ jobs:
           path: profile/streak.svg
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate raw stats JSON
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p profile
+          USER_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" https://api.github.com/users/Monam1083)
+          REPOS=$(echo "$USER_JSON" | grep -o '"public_repos": *[0-9]*' | grep -o '[0-9]*')
+          FOLLOWERS=$(echo "$USER_JSON" | grep -o '"followers": *[0-9]*' | grep -o '[0-9]*')
+          STARS=0
+          PAGE=1
+          while true; do
+            PAGE_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/users/Monam1083/repos?per_page=100&page=$PAGE")
+            COUNT=$(echo "$PAGE_JSON" | grep -o '"stargazers_count": *[0-9]*' | grep -o '[0-9]*' | paste -sd+ - | bc 2>/dev/null || echo 0)
+            STARS=$((STARS + COUNT))
+            LEN=$(echo "$PAGE_JSON" | grep -o '"id":' | wc -l)
+            if [ "$LEN" -lt 100 ]; then break; fi
+            PAGE=$((PAGE + 1))
+          done
+          echo "{\"public_repos\": $REPOS, \"followers\": $FOLLOWERS, \"total_stars\": $STARS}" > profile/stats.json
+          cat profile/stats.json
+
       - name: Commit generated cards
         run: |
           git config user.name "github-actions[bot]"
