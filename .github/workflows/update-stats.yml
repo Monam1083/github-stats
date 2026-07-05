@@ -28,7 +28,10 @@ jobs:
           path: profile/streak.svg
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate raw stats JSON
+      - name: Pull latest before writing JSON
+        run: git pull origin main
+
+      - name: Generate raw stats JSON and commit immediately
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -47,12 +50,13 @@ jobs:
             PAGE=$((PAGE + 1))
           done
           echo "{\"public_repos\": $REPOS, \"followers\": $FOLLOWERS, \"total_stars\": $STARS}" > profile/stats.json
+          echo "----- Verifying file was written -----"
+          ls -la profile/
           cat profile/stats.json
-
-      - name: Commit generated cards
-        run: |
+          echo "----- Committing now -----"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add profile/
-          git commit -m "Update stats cards" || exit 0
+          git add profile/stats.json
+          git status
+          git commit -m "Update stats.json" || echo "Nothing to commit"
           git push
