@@ -2,7 +2,7 @@
 
 Self-hosted, automatically-updating GitHub stats cards for [monam.tech](https://monam.tech) — no third-party rate limits, no downtime  no stale data.
 
-## Why this exists
+### Why this exists
 
 Public stats card services like `github-readme-stats.vercel.app` and `streak-stats.demolab.com` are shared by thousands of users and frequently hit rate limits or go down. This repo generates the same cards using a scheduled GitHub Action commits them as static files, and serves them via `raw.githubusercontent.com` — which is backed by GitHub's CDN and effectively never fails.
 
