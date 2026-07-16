@@ -1,6 +1,6 @@
 # github-stats
 
-Self-hosted, automatically-updating GitHub stats cards for [monam.tech](https://monam.tech) — no third-party rate limits, no downtime  no stale data.
+Self-hosted, automatically- updating GitHub stats cards for [monam.tech](https://monam.tech) — no third-party rate limits, no downtime  no stale data.
 
 ### Why this exists
 
