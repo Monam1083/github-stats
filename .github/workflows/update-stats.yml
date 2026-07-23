@@ -39,7 +39,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           USERNAME: Monam1083
-          SVG_OUT_FOLDER: profile/3d-contrib
 
       - name: Pull latest before writing JSON
         run: git pull origin main
@@ -69,7 +68,7 @@ jobs:
           echo "----- Committing now -----"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add profile/stats.json profile/stats.svg profile/streak.svg profile/top-langs.svg profile/3d-contrib
+          git add profile/stats.json profile/stats.svg profile/streak.svg profile/top-langs.svg profile-3d-contrib
           git status
           git commit -m "Update stats, streak, top-langs, and 3D contrib cards" || echo "Nothing to commit"
           git push
