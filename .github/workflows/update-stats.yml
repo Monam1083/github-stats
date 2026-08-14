@@ -10,7 +10,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v6
-
       - name: Generate stats card
         uses: stats-organization/github-readme-stats-action@v2
         with:
@@ -18,14 +17,12 @@ jobs:
           options: username=Monam1083&show_icons=true&theme=dark&hide_border=true&bg_color=0c0c0c&title_color=10B981&icon_color=10B981&text_color=f0ece4&ring_color=10B981
           path: profile/stats.svg
           token: ${{ secrets.PAT_TOKEN }}
-
       - name: Generate streak stats card
         uses: DenverCoder1/github-readme-streak-stats@main
         with:
           options: user=Monam1083&theme=dark&hide_border=true&background=0c0c0c&ring=10B981&fire=10B981&currStreakLabel=10B981&sideLabels=888070&dates=888070
           path: profile/streak.svg
           token: ${{ secrets.PAT_TOKEN }}
-
       - name: Generate top languages card
         uses: stats-organization/github-readme-stats-action@v2
         with:
@@ -33,16 +30,13 @@ jobs:
           options: username=Monam1083&layout=compact&langs_count=6&theme=dark&hide_border=true&bg_color=0c0c0c&title_color=10B981&text_color=f0ece4
           path: profile/top-langs.svg
           token: ${{ secrets.PAT_TOKEN }}
-
       - name: Generate 3D contribution graph
         uses: yoshi389111/github-profile-3d-contrib@0.7.1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           USERNAME: Monam1083
-
       - name: Pull latest before writing JSON
         run: git pull origin main
-
       - name: Generate raw stats JSON and commit everything
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -72,3 +66,9 @@ jobs:
           git status
           git commit -m "Update stats, streak, top-langs, and 3D contrib cards" || echo "Nothing to commit"
           git push
+      - name: Purge jsDelivr cache
+        run: |
+          for f in profile/stats.svg profile/streak.svg profile/top-langs.svg profile/stats.json profile-3d-contrib/profile-night-rainbow.svg; do
+            curl -s "https://purge.jsdelivr.net/gh/Monam1083/github-stats@main/$f"
+            echo ""
+          done
