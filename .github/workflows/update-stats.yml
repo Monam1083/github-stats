@@ -1,15 +1,20 @@
 name: Update README cards
+
 on:
   schedule:
-    - cron: "0 0 * * *"     # runs once daily at midnight UTC
-  workflow_dispatch:          # lets you trigger it manually from the Actions tab
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout github-stats repository
+        uses: actions/checkout@v6
+
       - name: Generate stats card
         uses: stats-organization/github-readme-stats-action@v2
         with:
@@ -17,12 +22,14 @@ jobs:
           options: username=Monam1083&show_icons=true&theme=dark&hide_border=true&bg_color=0c0c0c&title_color=10B981&icon_color=10B981&text_color=f0ece4&ring_color=10B981
           path: profile/stats.svg
           token: ${{ secrets.PAT_TOKEN }}
+
       - name: Generate streak stats card
         uses: DenverCoder1/github-readme-streak-stats@main
         with:
           options: user=Monam1083&theme=dark&hide_border=true&background=0c0c0c&ring=10B981&fire=10B981&currStreakLabel=10B981&sideLabels=888070&dates=888070
           path: profile/streak.svg
           token: ${{ secrets.PAT_TOKEN }}
+
       - name: Generate top languages card
         uses: stats-organization/github-readme-stats-action@v2
         with:
@@ -30,45 +37,45 @@ jobs:
           options: username=Monam1083&layout=compact&langs_count=6&theme=dark&hide_border=true&bg_color=0c0c0c&title_color=10B981&text_color=f0ece4
           path: profile/top-langs.svg
           token: ${{ secrets.PAT_TOKEN }}
+
       - name: Generate 3D contribution graph
         uses: yoshi389111/github-profile-3d-contrib@0.7.1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           USERNAME: Monam1083
-      - name: Pull latest before writing JSON
-        run: git pull origin main
-      - name: Generate raw stats JSON and commit everything
+
+      - name: Generate raw stats JSON
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           mkdir -p profile
-          USER_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" https://api.github.com/users/Monam1083)
-          REPOS=$(echo "$USER_JSON" | grep -o '"public_repos": *[0-9]*' | grep -o '[0-9]*')
-          FOLLOWERS=$(echo "$USER_JSON" | grep -o '"followers": *[0-9]*' | grep -o '[0-9]*')
-          STARS=0
-          PAGE=1
-          while true; do
-            PAGE_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/users/Monam1083/repos?per_page=100&page=$PAGE")
-            COUNT=$(echo "$PAGE_JSON" | grep -o '"stargazers_count": *[0-9]*' | grep -o '[0-9]*' | paste -sd+ - | bc 2>/dev/null || echo 0)
-            STARS=$((STARS + COUNT))
-            LEN=$(echo "$PAGE_JSON" | grep -o '"id":' | wc -l)
-            if [ "$LEN" -lt 100 ]; then break; fi
-            PAGE=$((PAGE + 1))
-          done
+          USER_JSON=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/users/Monam1083)
+          REPOS=$(echo "$USER_JSON" | jq -r '.public_repos')
+          FOLLOWERS=$(echo "$USER_JSON" | jq -r '.followers')
+          STARS=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/users/Monam1083/repos?per_page=100&type=owner" | jq '[.[].stargazers_count] | add // 0')
           echo "{\"public_repos\": $REPOS, \"followers\": $FOLLOWERS, \"total_stars\": $STARS}" > profile/stats.json
-          echo "----- Verifying files were written -----"
-          ls -la profile/
-          cat profile/stats.json
-          echo "----- Committing now -----"
+
+      - name: Commit generated stats
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add profile/stats.json profile/stats.svg profile/streak.svg profile/top-langs.svg profile-3d-contrib
-          git status
-          git commit -m "Update stats, streak, top-langs, and 3D contrib cards" || echo "Nothing to commit"
+          git commit -m "Update GitHub stats cards" || echo "Nothing to commit"
           git push
-      - name: Purge jsDelivr cache
+
+      - name: Update cache version in profile README
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          for f in profile/stats.svg profile/streak.svg profile/top-langs.svg profile/stats.json profile-3d-contrib/profile-night-rainbow.svg; do
-            curl -s "https://purge.jsdelivr.net/gh/Monam1083/github-stats@main/$f"
-            echo ""
-          done
+          VERSION=$(date +%s)
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/Monam1083/Monam1083.git" profile-readme
+          cd profile-readme
+          sed -i -E "s#(https://raw.githubusercontent.com/Monam1083/github-stats/main/profile/stats\.svg)\?v=[^\" )]+#\1?v=${VERSION}#g" README.md
+          sed -i -E "s#(https://raw.githubusercontent.com/Monam1083/github-stats/main/profile/streak\.svg)\?v=[^\" )]+#\1?v=${VERSION}#g" README.md
+          sed -i -E "s#(https://raw.githubusercontent.com/Monam1083/github-stats/main/profile/top-langs\.svg)\?v=[^\" )]+#\1?v=${VERSION}#g" README.md
+          sed -i -E "s#(https://raw.githubusercontent.com/Monam1083/github-stats/main/profile-3d-contrib/profile-night-rainbow\.svg)\?v=[^\" )]+#\1?v=${VERSION}#g" README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Refresh GitHub stats cache version" || echo "README already up to date"
+          git push
